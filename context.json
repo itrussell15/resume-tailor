@@ -1,0 +1,5 @@
+{
+  "scraper": {
+    "system_instructions": "Look through this job posting content and extract relevant information. Find information that someone who might be looking to apply to this job would want to know about specific qualifications that they should have, experience level, etc.",
+  }
+}
