@@ -211,6 +211,7 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Custom
+__pycache__/
 .idea/
 output/
 SECRET.txt
