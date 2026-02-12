@@ -35,7 +35,7 @@ async def suggestions(request: Request):
 
     try:
         def work():
-            resume = Resume.from_pdf_url(api_key, resume_url)
+            resume = Resume.from_pdf_url(api_key, resume_url, prompt_config_path)
             suggestion = resume.generate_suggestions(job_posting_url)
             return asdict(suggestion)
 

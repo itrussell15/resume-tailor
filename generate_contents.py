@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import json
+import logging
 import datetime
 from pydoc import resolve
 
@@ -11,7 +13,6 @@ from google import genai
 from google.genai import types
 from dataclasses import dataclass, asdict
 
-CONFIG = "context.json"
 MODEL = "gemini-3-flash-preview"
 TIMESTAMP_FORMAT = "%Y_%m_%d-%H_%M_%S"
 
@@ -25,56 +26,75 @@ class ResumeSuggestions:
     revised_resume_content: str
     model: str
 
+
+@dataclass 
+class PromptConfig:
+    missing_skill: str
+    resume_changes: str
+    job_info_scrape: str
+    insight_extraction: str
+
+    @staticmethod
+    def from_json(path: str) -> PromptConfig:
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"No file '{path}' found.")
+
+        with open(path, "r") as f:
+            json_data = json.load(f)
+        output = PromptConfig(**json_data["prompts"])
+        return output
+
 class Resume:
 
-    def __init__(self, api_key: str, resume_context: types.Part) -> None:
+    def __init__(self, api_key: str, resume_context: types.Part, prompt_config: PromptConfig) -> None:
         self._client = genai.Client(api_key=api_key)
         self._resume_context = resume_context
+        self._prompts = prompt_config
 
-    @classmethod
-    def from_pdf_url(self, api_key: str, url: str) -> Resume:
+    @staticmethod
+    def from_pdf_url(api_key: str, url: str, prompt_config_path: str) -> Resume:
         pdf_data = httpx.get(url).content
         resume_context = types.Part.from_bytes(
             data=pdf_data,
             mime_type='application/pdf',
         )
-        return Resume(api_key, resume_context)
+        prompts = PromptConfig.from_json(prompt_config_path)
+        return Resume(api_key, resume_context, prompts)
 
     def generate_suggestions(self, job_posting_url: str) -> ResumeSuggestions:
         job_posting_data = self._fetch_job_posting_contents(job_posting_url)
         job_insights = self._mine_job_insights(job_posting_data)
 
-        header = "POTENTIALLY HELPFUL THINGS"
-        split_char = "$$$"
-
-        prompt = f"Using the job posting and information and the information section in the resume, tailor the resume data to match the information that is found in the job posting. Keep this information concise and able to fit in the same amount of space that the original information fit in already. For each job, please provide at most 4 bullet points that highlight the skills that the current resume has, but in a way that the new job poster would be interested in. Do not make up content about what the user has done ever. Only use the information that you have available here. Please do not include things in your response that will not change based on the job posting information like a person's name or email, only include information that can or could have changed based on the job posting you have been shown. If you feel that more information about the person could greatly help you add content about them to increase their success when applying for this job, please leave a note about what you would like to know or what things they might be able to add that could help their changes, if you do this then add it as a section at the very top titled '{header}' end it with '{split_char}'. For uniformity, please always include this section and leave it blank if you don't have any insights."
+        system_instruction = "You are to generate response in json format that would correspond to each section"
         response = self._client.models.generate_content(
             model=MODEL,
             contents=[
                 self._resume_context,
                 job_insights,
-                prompt
+                self._prompts.job_info_scrape,
+                self._prompts.missing_skill,
+                self._prompts.resume_changes,
             ]
         )
+        return response
 
-        suggestions, updated_content = response.text.split(split_char)
-        return ResumeSuggestions(
-            query_timestamp=datetime.datetime.now().strftime(TIMESTAMP_FORMAT),
-            job_posting_url=job_posting_url,
-            job_posting_insights=job_insights.text,
-            suggestion_prompt=prompt,
-            suggestion_content=suggestions.split(header)[-1].strip(),
-            revised_resume_content=updated_content.strip(),
-            model=MODEL
-        )
+        # suggestions, updated_content = response.text.split(split_char)
+        # return ResumeSuggestions(
+        #     query_timestamp=datetime.datetime.now().strftime(TIMESTAMP_FORMAT),
+        #     job_posting_url=job_posting_url,
+        #     job_posting_insights=job_insights.text,
+        #     suggestion_prompt=prompt,
+        #     suggestion_content=suggestions.split(header)[-1].strip(),
+        #     revised_resume_content=updated_content.strip(),
+        #     model=MODEL
+        # )
 
     def _mine_job_insights(self, raw_job_data: str) -> types.Part:
-        prompt="Look through this job posting content and extract relevant information. Content will likely be in raw html. Find information that someone who might be looking to apply to this job would want to know about specific qualifications that they should have, experience level, etc."
         response = self._client.models.generate_content(
             model=MODEL,
             contents=[
                 raw_job_data,
-                prompt
+                self._prompts.insight_extraction
             ]
         )
         return types.Part(response.text)
@@ -93,15 +113,19 @@ if __name__ == "__main__":
 
     url = "https://resume.itrussell.me/docs/resume.pdf"
     job_url = "https://www.linkedin.com/jobs/view/4322330173"
-    resume = Resume.from_pdf_url(api_key, url)
+    prompt_path = "prompts.json"
+
+    resume = Resume.from_pdf_url(api_key, url, prompt_path)
     suggestion = resume.generate_suggestions(job_url)
+    print(suggestion.text)
 
-    final = os.path.join(output, f"{suggestion.query_timestamp}.json")
+    final = os.path.join(output, f"test.json")
     with open(final, 'w') as f:
-        json.dump(asdict(suggestion), f, indent=3)
+        data = json.loads(suggestions.text)
+        json.dump(data, f, indent=3)
 
-    print(f"Suggestions: {suggestion.suggestion_content}")
-    print(f"New Resume: \n{suggestion.revised_resume_content}")
+    # print(f"Suggestions: {suggestion.suggestion_content}")
+    # print(f"New Resume: \n{suggestion.revised_resume_content}")
 
 
 
