@@ -13,19 +13,26 @@ from google import genai
 from google.genai import types
 from dataclasses import dataclass, asdict
 
+from typing import List, Dict, Any
+
 MODEL = "gemini-3-flash-preview"
 TIMESTAMP_FORMAT = "%Y_%m_%d-%H_%M_%S"
 
 @dataclass
-class ResumeSuggestions:
-    query_timestamp: datetime.datetime
-    job_posting_url: str
-    job_posting_insights: str
-    suggestion_prompt: str
-    suggestion_content: str
-    revised_resume_content: str
-    model: str
+class JobDetails:
+    role: str
+    company: str
 
+@dataclass
+class JobBlock:
+    company: str
+    bullet_points: List[str]
+
+@dataclass
+class ResumeFormattedResponse:
+    job_details: JobDetails
+    missing_skill: str
+    resume_changes: List[JobBlock]
 
 @dataclass 
 class PromptConfig:
@@ -43,6 +50,19 @@ class PromptConfig:
             json_data = json.load(f)
         output = PromptConfig(**json_data["prompts"])
         return output
+
+@dataclass
+class ResumeSuggestions:
+    query_timestamp: datetime.datetime
+    job_posting_url: str
+    job_posting_insights: str
+    prompts: PromptConfig
+    suggestion_content: ResumeFormattedResponse
+    model: str
+
+    @staticmethod
+    def from_response(response: str) -> None:
+        job_details = JobDetails(**response["job_details"])
 
 class Resume:
 
@@ -65,7 +85,7 @@ class Resume:
         job_posting_data = self._fetch_job_posting_contents(job_posting_url)
         job_insights = self._mine_job_insights(job_posting_data)
 
-        system_instruction = "You are to generate response in json format that would correspond to each section"
+        system_instruction = "You are to generate response in json format that would correspond to each section. Do not wrap this json as a markdown, simply just json format as a string"
         response = self._client.models.generate_content(
             model=MODEL,
             contents=[
@@ -76,18 +96,29 @@ class Resume:
                 self._prompts.resume_changes,
             ]
         )
-        return response
 
-        # suggestions, updated_content = response.text.split(split_char)
-        # return ResumeSuggestions(
-        #     query_timestamp=datetime.datetime.now().strftime(TIMESTAMP_FORMAT),
-        #     job_posting_url=job_posting_url,
-        #     job_posting_insights=job_insights.text,
-        #     suggestion_prompt=prompt,
-        #     suggestion_content=suggestions.split(header)[-1].strip(),
-        #     revised_resume_content=updated_content.strip(),
-        #     model=MODEL
-        # )
+        out_response = response.text.strip()
+        json_response = None
+        try: 
+            json_response = json.loads(out_response.strip())
+        except json.JSONDecodeError as e:
+            # It likes to response with markdown formatting. 
+            # Like ```json Content ``` so we have to try and parse out the json from the markdown if the first attempt fails.
+            try: 
+                split_string = out_response.split("\n")[1:-1]
+                json_response = json.loads("\n".join(split_string))
+            except json.JSONDecodeError as e:
+                logging.error(f"Failed to parse JSON response: {out_response}")
+                raise e
+
+        return ResumeSuggestions(
+            query_timestamp=datetime.datetime.now().strftime(TIMESTAMP_FORMAT),
+            job_posting_url=job_posting_url,
+            job_posting_insights=job_insights.text,
+            prompts=self._prompts,
+            suggestion_content=ResumeFormattedResponse(**json_response),
+            model=MODEL
+        )
 
     def _mine_job_insights(self, raw_job_data: str) -> types.Part:
         response = self._client.models.generate_content(
@@ -112,21 +143,15 @@ if __name__ == "__main__":
         api_key = f.readlines()[0].strip()
 
     url = "https://resume.itrussell.me/docs/resume.pdf"
-    job_url = "https://www.linkedin.com/jobs/view/4322330173"
+    job_url = "https://www.linkedin.com/jobs/view/4341275216"
     prompt_path = "prompts.json"
 
     resume = Resume.from_pdf_url(api_key, url, prompt_path)
     suggestion = resume.generate_suggestions(job_url)
-    print(suggestion.text)
+    print(suggestion)
 
-    final = os.path.join(output, f"test.json")
-    with open(final, 'w') as f:
-        data = json.loads(suggestions.text)
-        json.dump(data, f, indent=3)
-
-    # print(f"Suggestions: {suggestion.suggestion_content}")
-    # print(f"New Resume: \n{suggestion.revised_resume_content}")
-
+    with open("output.json", 'w') as f:
+        json.dump(asdict(suggestion), f, indent=4)
 
 
 

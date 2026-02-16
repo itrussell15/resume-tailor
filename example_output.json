@@ -1,0 +1,57 @@
+{
+    "query_timestamp": "2026_02_16-22_36_59",
+    "job_posting_url": "https://www.linkedin.com/jobs/view/4341275216",
+    "job_posting_insights": "This job posting is for a **Software Engineer II - CoreAI** position at **Microsoft** in **Redmond, WA**. Here is the extracted and summarized information relevant to a potential applicant:\n\n### **Role Overview**\n*   **Team:** Data Ingestion & Augmentation team.\n*   **Focus:** Building advanced retrieval systems (Azure AI Search) that power Generative AI (GenAI) and Copilot-style applications using Large Language Models (LLMs) and Retrieval Augmented Generation (RAG).\n*   **Mission:** Transforming traditional search into intelligent AI indexes and building the \"memory layer\" for AI-powered agentic applications.\n\n### **Required Qualifications**\nTo be considered for this role, you **must** have:\n*   **Education:** Bachelor\u2019s Degree in Computer Science (or a related technical field) **OR** equivalent experience.\n*   **Engineering Experience:** 2+ years of technical engineering experience.\n*   **Coding Proficiency:** Experience in languages such as **C, C++, C#, Java, JavaScript, or Python**.\n*   **Domain Expertise:** 1+ years of experience in at least one of the following:\n    *   Distributed systems\n    *   Artificial Intelligence\n    *   Backend Development\n\n### **Preferred Qualifications**\nCandidates with these additional attributes are preferred:\n*   **Advanced Experience:** Master\u2019s Degree + 3 years of experience **OR** Bachelor\u2019s Degree + 5 years of experience.\n*   **Tools:** Proficiency in Agile development and tools like **GitHub** or **Azure DevOps**.\n*   **Specialized Knowledge:** Practical experience in **Information Retrieval, Vector Databases, or LLMs** for real-world applications.\n*   **System Design:** Demonstrated ability to design fault-tolerant, high-availability services.\n\n### **Key Responsibilities**\n*   **Data Integration:** Developing connectors to integrate diverse data sources into Azure AI Search.\n*   **AI Enrichment:** Generating vector embeddings for text/images and transforming unstructured data into structured representations.\n*   **Development Cycle:** Writing, debugging, testing, and supporting secure, scalable, and maintainable code.\n*   **System Design:** Participating in code reviews and using telemetry/data to inform design decisions.\n*   **Operations:** Maintaining live services, including participation in an **on-call rotation**.\n\n### **Compensation and Benefits**\n*   **Base Pay Range:** $100,600 \u2013 $199,000 per year (Standard U.S.).\n*   **High-Cost Areas (SF/NYC):** $131,400 \u2013 $215,400 per year.\n*   **Additional:** Eligible for bonuses and benefits.\n\n### **Additional Requirements**\n*   **Security Screening:** You must pass the **Microsoft Cloud Background Check** upon hire and every two years thereafter.\n*   **Employment Type:** Full-time.\n\n### **How to Apply**\nThe posting indicates that applications are accepted on an ongoing basis until the position is filled, though it remains open for a minimum of 5 days from the posting date. You can apply via the [Microsoft Careers site](https://apply.careers.microsoft.com/careers/job/1970393556621082).",
+    "prompts": {
+        "missing_skill": "If you feel that more information about the person could greatly help you add content about them to increase their success when applying for this job, please leave a note about what you would like to know or what things they might be able to add that could help their changes. Include this under the key 'missing_skill'",
+        "resume_changes": "Using the job posting and information and the information section in the resume, tailor the resume data to match the information that is found in the job posting. Keep this information concise and able to fit in the same amount of space that the original information fit in already. For each job, please provide at most 4 bullet points that highlight the skills that the current resume has, but in a way that the new job poster would be interested in. Do not make up content about what the user has done ever. Only use the information that you have available here. Please do not include things in your response that will not change based on the job posting information like a person's name or email, only include information that can or could have changed based on the job posting you have been shown. Include this under the key 'resume_changes' and have a sub key for 'company' and 'bullet_points' only",
+        "job_info_scrape": "Please include the postings role, and company in your response under the key 'job_details'",
+        "insight_extraction": "Look through this job posting content and extract relevant information. Content will likely be in raw html. Find information that someone who might be looking to apply to this job would want to know about specific qualifications that they should have, experience level, etc."
+    },
+    "suggestion_content": {
+        "job_details": {
+            "role": "Software Engineer II - CoreAI",
+            "company": "Microsoft"
+        },
+        "missing_skill": "The job posting emphasizes experience with 'Information Retrieval, Vector Databases, LLMs, and RAG (Retrieval Augmented Generation).' While your Master\u2019s degree is in ML, your work history is heavily focused on hardware-adjacent software and robotics. To increase your chances, consider adding specific projects or coursework from your Georgia Tech MS program that involve Python-based LLM applications, vector search (like FAISS or Pinecone), or backend development for distributed systems. Additionally, mentioning any experience with C# or Azure would be beneficial as they are core to Microsoft's ecosystem.",
+        "resume_changes": [
+            {
+                "company": "Meta",
+                "bullet_points": [
+                    "Architected a multi-OS suite of components to streamline the calibration process, improving developer velocity and reducing program bring-up time by 70%.",
+                    "Lead developer for a synchronized data ingestion and recording tool used for high-resolution image capture across 4 global programs.",
+                    "Leveraged Python to generate high-quality code and internally developed tools to solve complex synchronization problems during system prototypes.",
+                    "Collaborated with cross-functional external teams to debug and extend functionality of image capture tooling to meet high-throughput production requirements."
+                ]
+            },
+            {
+                "company": "Locus Robotics",
+                "bullet_points": [
+                    "Deployed and integrated 300+ autonomous robots across 30+ warehouse environments to enable automated production fulfillment for global logistics brands.",
+                    "Translated complex customer requirements into actionable software and system changes for large-scale production implementations.",
+                    "Identified and resolved critical system issues by leveraging cross-disciplinary knowledge of software, mechanical, and electrical systems.",
+                    "Collaborated with remote support and engineering teams to resolve fleet-wide bugs and maintain high system availability."
+                ]
+            },
+            {
+                "company": "Black Box VR",
+                "bullet_points": [
+                    "Explored and executed development of motion control software for 6-axis VR systems, including GUI development and automated usage tracking.",
+                    "Designed and engineered functional prototypes and mechanisms that achieved a 35% reduction in total system costs.",
+                    "Developed software-driven maintenance trackers to monitor machine usage and ensure long-term hardware reliability.",
+                    "Integrated software and mechanical components using various manufacturing processes to withstand high-stress usage environments."
+                ]
+            },
+            {
+                "company": "Franklin Sensors",
+                "bullet_points": [
+                    "Engineered and launched electromechanical products sold in major retail outlets across North America.",
+                    "Partnered with overseas and local engineering teams to design and assemble complex 4-part plastic electromechanical assemblies.",
+                    "Created and installed automation fixtures to optimize local manufacturing and assembly efficiency.",
+                    "Collaborated with manufacturing partners to develop specialized mechanical components for automated battery contact placement."
+                ]
+            }
+        ]
+    },
+    "model": "gemini-3-flash-preview"
+}
