@@ -12,6 +12,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 INDEX_PATH = os.path.join("static", "index.html")
 DEFAULT_RESUME_URL = "https://resume.itrussell.me/docs/resume.pdf"
+PROMPT_CONFIG_PATH = "prompts.json"
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
@@ -35,7 +36,7 @@ async def suggestions(request: Request):
 
     try:
         def work():
-            resume = Resume.from_pdf_url(api_key, resume_url, prompt_config_path)
+            resume = Resume.from_pdf_url(api_key, resume_url, PROMPT_CONFIG_PATH)
             suggestion = resume.generate_suggestions(job_posting_url)
             return asdict(suggestion)
 

@@ -5,11 +5,20 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Resume Tailor</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
       pre { font-family: 'Monaco', 'Menlo', monospace; }
       .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
       .smooth-transition { transition: all 0.3s ease; }
       .input-focus { @apply focus:ring-2 focus:ring-purple-500 focus:border-transparent; }
+      .markdown-content h1, .markdown-content h2, .markdown-content h3 { @apply font-bold mt-4 mb-2; }
+      .markdown-content h1 { @apply text-2xl; }
+      .markdown-content h2 { @apply text-xl; }
+      .markdown-content h3 { @apply text-lg; }
+      .markdown-content ul, .markdown-content ol { @apply ml-4 mb-2; }
+      .markdown-content li { @apply mb-1; }
+      .markdown-content code { @apply bg-gray-200 px-1 py-0.5 rounded text-sm font-mono; }
+      .markdown-content blockquote { @apply border-l-4 border-gray-300 pl-4 italic text-gray-600 my-2; }
     </style>
   </head>
   <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen py-12 px-4">
@@ -61,25 +70,41 @@
         </form>
       </div>
 
-      <!-- Suggestions Section -->
-      <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+      <!-- Job Details Section -->
+      <div id="jobDetailsSection" class="bg-white rounded-lg shadow-md p-8 mb-8 hidden">
         <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
           <span class="w-8 h-8 gradient-bg rounded-full text-white flex items-center justify-center text-sm font-bold mr-3">1</span>
-          Suggestions
+          Job Details
         </h2>
-        <div id="suggestions" class="min-h-12 text-gray-600">
-          <p class="text-gray-400">Submit a job posting URL to get started</p>
+        <div id="jobDetails" class="space-y-2 text-gray-700">
+          <p><span class="font-semibold">Role:</span> <span id="jobRole"></span></p>
+          <p><span class="font-semibold">Company:</span> <span id="jobCompany"></span></p>
         </div>
       </div>
 
-      <!-- Revised Resume Section -->
-      <div class="bg-white rounded-lg shadow-md p-8">
+      <!-- Missing Skill Section -->
+      <div id="missingSectionSection" class="bg-white rounded-lg shadow-md p-8 mb-8 hidden">
         <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
           <span class="w-8 h-8 gradient-bg rounded-full text-white flex items-center justify-center text-sm font-bold mr-3">2</span>
-          Revised Resume Content
+          Missing Skill
         </h2>
-        <pre id="revised" class="bg-gray-900 text-gray-100 rounded-lg p-6 overflow-x-auto text-sm leading-relaxed min-h-12">Your tailored resume will appear here...</pre>
+        <div id="missingSkill" class="markdown-content text-gray-700 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        </div>
       </div>
+
+      <!-- Suggestions Section -->
+      <div id="suggestionsSection" class="bg-white rounded-lg shadow-md p-8 mb-8 hidden">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <span class="w-8 h-8 gradient-bg rounded-full text-white flex items-center justify-center text-sm font-bold mr-3">3</span>
+          Resume Suggestions
+        </h2>
+        <div id="suggestions" class="space-y-4">
+          <p class="text-gray-400">Suggestions will appear here</p>
+        </div>
+      </div>
+
+      <!-- Status Messages -->
+      <div id="statusMessages" class="hidden mb-8"></div>
     </div>
 
     <script src="/static/app.js"></script>
