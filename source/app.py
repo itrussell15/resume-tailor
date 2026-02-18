@@ -8,11 +8,12 @@ from dataclasses import asdict
 from generate_contents import Resume
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 INDEX_PATH = os.path.join("static", "index.html")
 DEFAULT_RESUME_URL = "https://resume.itrussell.me/docs/resume.pdf"
-PROMPT_CONFIG_PATH = "prompts.json"
+PROMPT_CONFIG_PATH = os.path.join(static_dir, "prompts.json")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
