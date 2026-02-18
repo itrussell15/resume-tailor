@@ -1,8 +1,66 @@
-document.getElementById('jobForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const jobUrl = document.getElementById('jobUrl').value.trim();
-  const resumeUrl = document.getElementById('resumeUrl').value.trim();
-  const submitBtn = e.target.querySelector('button[type="submit"]');
+let lastSuggestionData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const jobForm = document.getElementById('jobForm');
+  if (!jobForm) {
+    console.error('jobForm not found in DOM');
+    return;
+  }
+
+  // Wire the generate button to call /api/generate with the last suggestions
+  const genBtn = document.getElementById('generateResumeBtn');
+  if (genBtn) {
+    genBtn.addEventListener('click', async () => {
+      if (!lastSuggestionData) {
+        alert('No suggestions available to generate a resume from.');
+        return;
+      }
+      genBtn.disabled = true;
+      const origText = genBtn.textContent;
+      genBtn.textContent = 'Generating...';
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ suggestion: lastSuggestionData })
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: res.statusText }));
+          const errorMsg = err.detail || res.statusText;
+          alert('Generate failed: ' + errorMsg);
+          return;
+        }
+
+        const result = await res.json();
+        const url = result.generated_resume_url;
+        if (url) {
+          window.open(url, '_blank');
+        } else {
+          alert('Generate succeeded.');
+        }
+      } catch (err) {
+        console.error('Generate request failed', err);
+        alert('Generate request failed: ' + (err.message || err));
+      } finally {
+        genBtn.disabled = false;
+        genBtn.textContent = origText;
+      }
+    });
+  }
+
+  jobForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const jobUrlEl = document.getElementById('jobUrl');
+    if (!jobUrlEl) {
+      console.error('jobUrl input not found');
+      return;
+    }
+    const jobUrl = (jobUrlEl.value || '').trim();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (!submitBtn) {
+      console.error('submit button not found');
+    }
 
   // Disable button and show loading state
   submitBtn.disabled = true;
@@ -13,16 +71,22 @@ document.getElementById('jobForm').addEventListener('submit', async (e) => {
   document.getElementById('jobDetailsSection').classList.add('hidden');
   document.getElementById('missingSectionSection').classList.add('hidden');
   document.getElementById('suggestionsSection').classList.add('hidden');
+  document.getElementById('generateSection')?.classList.add('hidden');
 
-  const statusDiv = document.getElementById('statusMessages');
-  statusDiv.innerHTML = '<div class="bg-blue-50 border border-blue-200 rounded-lg p-4"><div class="flex items-center gap-2 text-gray-600"><span class="animate-spin text-lg">⚙️</span> Analyzing job posting and generating suggestions...</div></div>';
-  statusDiv.classList.remove('hidden');
+    const statusDiv = document.getElementById('statusMessages');
+    if (statusDiv) {
+      statusDiv.innerHTML = '<div class="bg-blue-50 border border-blue-200 rounded-lg p-4"><div class="flex items-center gap-2 text-gray-600"><span class="animate-spin text-lg">⚙️</span> Analyzing job posting and generating suggestions...</div></div>';
+      statusDiv.classList.remove('hidden');
+    } else {
+      console.warn('statusMessages element not found');
+    }
 
   try {
+    console.debug('Submitting job posting URL to /api/suggestions', { jobUrl});
     const res = await fetch('/api/suggestions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ job_posting_url: jobUrl, resume_pdf_url: resumeUrl })
+      body: JSON.stringify({ job_posting_url: jobUrl })
     });
 
     if (!res.ok) {
@@ -33,6 +97,8 @@ document.getElementById('jobForm').addEventListener('submit', async (e) => {
     }
 
     const data = await res.json();
+    // store last suggestions so the generate button can use them
+    lastSuggestionData = data;
     statusDiv.classList.add('hidden');
     
     // Display Job Details
@@ -80,14 +146,22 @@ document.getElementById('jobForm').addEventListener('submit', async (e) => {
       });
       
       document.getElementById('suggestionsSection').classList.remove('hidden');
+      // Reveal the generate section so user can create a new resume from suggestions
+      document.getElementById('generateSection')?.classList.remove('hidden');
     }
-  } catch (err) {
-    statusDiv.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg"><strong>Request failed:</strong> ${escapeHtml(err.message)}</div>`;
-  } finally {
-    // Re-enable button
-    submitBtn.disabled = false;
-    submitBtn.textContent = originalText;
-  }
+    } catch (err) {
+      console.error('Error during suggestions request', err);
+      if (statusDiv) {
+        const msg = (err && err.message) ? escapeHtml(err.message) : 'Unknown error';
+        statusDiv.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg"><strong>Request failed:</strong> ${msg}</div>`;
+        statusDiv.classList.remove('hidden');
+      }
+    } finally {
+      // Re-enable button
+      if (submitBtn) submitBtn.disabled = false;
+      if (submitBtn) submitBtn.textContent = originalText;
+    }
+  });
 });
 
 // Helper function to escape HTML

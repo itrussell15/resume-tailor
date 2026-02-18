@@ -7,21 +7,88 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
+      :root{
+        --bg: #565656;
+        --panel: #1e1f22d6;
+        --panel-2: #0b1624;
+        --border: #0f1b2ad8;
+        --muted: #8b98a6;
+        --text: #e6eef8;
+        --accent: #ea580c;
+        --accent-600: #c2410c;
+        --shadow: rgba(2,6,23,0.6);
+      }
+
       pre { font-family: 'Monaco', 'Menlo', monospace; }
-      .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-      .smooth-transition { transition: all 0.3s ease; }
-      .input-focus { @apply focus:ring-2 focus:ring-purple-500 focus:border-transparent; }
-      .markdown-content h1, .markdown-content h2, .markdown-content h3 { @apply font-bold mt-4 mb-2; }
-      .markdown-content h1 { @apply text-2xl; }
-      .markdown-content h2 { @apply text-xl; }
-      .markdown-content h3 { @apply text-lg; }
-      .markdown-content ul, .markdown-content ol { @apply ml-4 mb-2; }
-      .markdown-content li { @apply mb-1; }
-      .markdown-content code { @apply bg-gray-200 px-1 py-0.5 rounded text-sm font-mono; }
-      .markdown-content blockquote { @apply border-l-4 border-gray-300 pl-4 italic text-gray-600 my-2; }
+      .smooth-transition { transition: all 0.28s ease; }
+
+      /* Dark gradient used for hero and numbered badges */
+      .gradient-bg { background: linear-gradient(135deg, #343434 0%, #0b1220 100%); }
+
+      /* Focus styling for inputs (tailwind @apply not available at runtime) */
+      .input-focus:focus { outline: none; box-shadow: 0 0 0 4px rgba(234,88,12,0.08); border-color: var(--accent); }
+
+      /* Markdown content adjustments */
+      .markdown-content h1, .markdown-content h2, .markdown-content h3 { font-weight: 700; margin-top: 1rem; margin-bottom: .5rem; }
+      .markdown-content h1 { font-size: 1.5rem; }
+      .markdown-content h2 { font-size: 1.25rem; }
+      .markdown-content h3 { font-size: 1.125rem; }
+      .markdown-content ul, .markdown-content ol { margin-left: 1rem; margin-bottom: .5rem; }
+      .markdown-content li { margin-bottom: .25rem; }
+      .markdown-content code { background: rgba(255,255,255,0.03); padding: .125rem .25rem; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace; font-size: .9rem; }
+      .markdown-content blockquote { border-left: 4px solid rgba(255,255,255,0.04); padding-left: .75rem; color: var(--muted); margin: .5rem 0; }
+
+      /* Override common Tailwind utility classes used in the markup to fit dark theme */
+      body { background-color: var(--bg); color: var(--text); }
+      .bg-white { background-color: var(--panel) !important; }
+      .rounded-lg { border-radius: 0.75rem !important; }
+      .shadow-md, .shadow-lg { box-shadow: 0 6px 20px var(--shadow) !important; }
+      .text-gray-800 { color: var(--text) !important; }
+      .text-gray-700 { color: #c8d6e7 !important; }
+      .text-gray-500 { color: #88a0b3 !important; }
+      .text-gray-400 { color: #6f7f8f !important; }
+      .placeholder-gray-400::placeholder { color: #6f7f8f !important; opacity: 0.9; }
+
+      /* Buttons and badges */
+      .gradient-bg.text-white { color: #fff !important; }
+      .gradient-bg.rounded-lg { background: linear-gradient(135deg,#072033 0%,#0b1220 70%); }
+
+      /* Number badge style in sections */
+      .w-8.h-8 { width: 2rem; height: 2rem; }
+      .rounded-full { border-radius: 9999px; }
+
+      /* Yellow highlight card (missing skill) — darker variant */
+      .bg-yellow-50 { background-color: rgba(226, 152, 16, 0.06) !important; }
+      .border-yellow-200 { border-color: rgba(234, 155, 8, 0.305) !important; }
+
+      /* Make suggestion boxes match the missing-skill highlight */
+      #suggestions > * {
+        background-color: rgba(226, 152, 16, 0.06) !important;
+        border: 1px solid rgba(234, 155, 8, 0.305) !important;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+      }
+
+      /* If suggestion entries use a .suggestion-card class, style that too */
+      .suggestion-card {
+        background-color: rgba(205, 132, 22, 0.06) !important;
+        border: 1px solid rgba(234,179,8,0.12) !important;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+      }
+
+      /* Ensure links have a warm accent */
+      a { color: var(--accent); }
+      a:hover { opacity: 0.95; }
+
+      /* Scrollbar tweaks */
+      ::-webkit-scrollbar { width: 10px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 8px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(234,88,12,0.18); }
     </style>
   </head>
-  <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen py-12 px-4">
+  <body class="min-h-screen py-12 px-4">
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="text-center mb-12">
@@ -46,19 +113,6 @@
               class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none input-focus smooth-transition"
             />
             <p class="text-xs text-gray-500 mt-1">Paste the URL of the job posting you want to tailor for</p>
-          </div>
-
-          <div>
-            <label for="resumeUrl" class="block text-sm font-semibold text-gray-700 mb-2">
-              Resume PDF URL <span class="text-gray-500 font-normal">(Optional)</span>
-            </label>
-            <input 
-              type="url" 
-              id="resumeUrl" 
-              placeholder="https://example.com/resume.pdf" 
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none input-focus smooth-transition"
-            />
-            <p class="text-xs text-gray-500 mt-1">If not provided, a default resume will be used</p>
           </div>
 
           <button 
@@ -100,6 +154,19 @@
         </h2>
         <div id="suggestions" class="space-y-4">
           <p class="text-gray-400">Suggestions will appear here</p>
+        </div>
+      </div>
+
+      <!-- Generate New Resume Section -->
+      <div id="generateSection" class="bg-white rounded-lg shadow-md p-8 mb-8 hidden">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <span class="w-8 h-8 gradient-bg rounded-full text-white flex items-center justify-center text-sm font-bold mr-3">4</span>
+          Generate new resume with these suggestions?
+        </h2>
+        <div class="flex justify-center">
+          <button id="generateResumeBtn" class="gradient-bg text-white font-semibold py-3 px-6 rounded-lg hover:shadow-lg smooth-transition transform hover:scale-105 active:scale-95">
+            Go!
+          </button>
         </div>
       </div>
 
