@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import os
+import re
+import datetime
 import json
 import logging
 import datetime
-from pydoc import resolve
 
 import httpx
 import json
@@ -23,6 +24,13 @@ class JobDetails:
     role: str
     company: str
 
+    @property
+    def file_name(self) -> str:
+        now = datetime.datetime.now().strftime(TIMESTAMP_FORMAT)
+        role = re.sub(r'[^A-Za-z0-9]+', '_', re.sub(r'^\s*["\']|["\']\s*,?\s*$', '', self.role)).strip('_')
+        company = re.sub(r'[^A-Za-z0-9]+', '_', re.sub(r'^\s*["\']|["\']\s*,?\s*$', '', self.company)).strip('_')
+        return f"{role}_{company}_{now}"
+
 @dataclass
 class JobBlock:
     company: str
@@ -33,6 +41,15 @@ class ResumeFormattedResponse:
     job_details: JobDetails
     missing_skill: str
     resume_changes: List[JobBlock]
+
+    @staticmethod
+    def from_json(json_data: Dict[str, Any]) -> ResumeFormattedResponse:
+        job_details = JobDetails(**json_data["job_details"])
+        return ResumeFormattedResponse(
+            job_details=job_details,
+            missing_skill=json_data["missing_skill"],
+            resume_changes=[JobBlock(**block) for block in json_data["resume_changes"]]
+        )
 
 @dataclass 
 class PromptConfig:
@@ -61,8 +78,24 @@ class ResumeSuggestions:
     model: str
 
     @staticmethod
-    def from_response(response: str) -> None:
-        job_details = JobDetails(**response["job_details"])
+    def from_json(json_data: Dict[str, Any]) -> 'ResumeSuggestions':
+        formatted_response = ResumeFormattedResponse.from_json(json_data["suggestion_content"])
+        return ResumeSuggestions(
+            query_timestamp=json_data["query_timestamp"],
+            job_posting_url=json_data["job_posting_url"],
+            job_posting_insights=json_data["job_posting_insights"],
+            prompts=PromptConfig(**json_data["prompts"]),
+            suggestion_content=formatted_response,
+            model=json_data["model"]
+        )
+
+    @classmethod
+    def from_json_file(cls, file_name: str) -> 'ResumeSuggestions':
+        if not os.path.exists(file_name):
+            raise FileNotFoundError(f"No file '{file_name}' found.")
+        with open(file_name, "r") as f:
+            json_data = json.load(f)
+        return cls.from_json(json_data)
 
 class Resume:
 
@@ -110,13 +143,12 @@ class Resume:
             except json.JSONDecodeError as e:
                 logging.error(f"Failed to parse JSON response: {out_response}")
                 raise e
-
         return ResumeSuggestions(
             query_timestamp=datetime.datetime.now().strftime(TIMESTAMP_FORMAT),
             job_posting_url=job_posting_url,
             job_posting_insights=job_insights.text,
             prompts=self._prompts,
-            suggestion_content=ResumeFormattedResponse(**json_response),
+            suggestion_content=ResumeFormattedResponse.from_json(json_response),
             model=MODEL
         )
 
