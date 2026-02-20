@@ -1,7 +1,4 @@
 { 
-    "systems_instructions": {
-        "generate_suggestions": "You are to generate response in json format that would correspond to each section. Do not wrap this json as a markdown section or have any formatting to make render as markdown, simply just json format."
-    },
     "prompts": {
         "missing_skill": "If you feel that more information about the person could greatly help you add content about them to increase their success when applying for this job, please leave a note about what you would like to know or what things they might be able to add that could help their changes. Include this under the key 'missing_skill'", 
         "resume_changes": "Using the job posting and information and the information section in the resume, tailor the resume data to match the information that is found in the job posting. Keep this information concise and able to fit in the same amount of space that the original information fit in already. For each job, please provide at most 4 bullet points that highlight the skills that the current resume has, but in a way that the new job poster would be interested in. Do not make up content about what the user has done ever. Only use the information that you have available here. Please do not include things in your response that will not change based on the job posting information like a person's name or email, only include information that can or could have changed based on the job posting you have been shown. Include this under the key 'resume_changes' and have a sub key for 'company' and 'bullet_points' only", 

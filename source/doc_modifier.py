@@ -1,16 +1,17 @@
 
 import logging
+from .log_utils import get_logger
 import json
 from docx import Document
 
-from generate_contents import ResumeFormattedResponse, JobDetails, JobBlock
+from .generate_contents import ResumeFormattedResponse, JobDetails, JobBlock
 
 from typing import Any, Dict, List
 
 class DocModifier:
 
     def __init__(self, doc_path: str) -> None:
-        self.logger = logging.getLogger(f"uvicorn.{__name__}")
+        self.logger = get_logger(self.__class__.__name__)
         self.logger.info(f"Initializing DocModifier with doc path: {doc_path}")
         self._doc = Document(doc_path)
         self.sections = self._get_sections()
@@ -58,7 +59,11 @@ class DocModifier:
             self.modify_section(old_section, new_section)
     
     def save(self, path: str):
-        self._doc.save(path)
+        try:
+            self._doc.save(path)
+        except Exception as e:
+            self.logger.error(str(e))
+            raise e
 
 if __name__ == "__main__":
     modifier = DocModifier("Isaac_Trussell.docx")

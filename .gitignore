@@ -215,3 +215,6 @@ __pycache__/
 .idea/
 output/
 SECRET.txt
+
+resources/
+!resources/prompts.json

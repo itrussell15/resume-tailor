@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ suggestion: lastSuggestionData })
         });
+        console.log(res)
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({ detail: res.statusText }));
@@ -32,13 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        const result = await res.json();
-        const url = result.generated_resume_url;
-        if (url) {
-          window.open(url, '_blank');
-        } else {
-          alert('Generate succeeded.');
-        }
+        // const result = await res.json();
+      //   const url = result.generated_resume_url;
+      //   if (url) {
+      //     window.open(url, '_blank');
+      //   } else {
+      //     alert('Generate succeeded.');
+      //   }
       } catch (err) {
         console.error('Generate request failed', err);
         alert('Generate request failed: ' + (err.message || err));
