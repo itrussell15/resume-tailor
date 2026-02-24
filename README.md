@@ -1,6 +1,6 @@
 # Resume Tailor
 
-![logo](resources/resume-tailor.png)
+![logo](images/resume-tailor-logo.png)
 
 Quick start (local):
 
