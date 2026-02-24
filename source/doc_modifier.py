@@ -1,10 +1,10 @@
 
 import logging
-from .log_utils import get_logger
+from log_utils import get_logger
 import json
 from docx import Document
 
-from .generate_contents import ResumeFormattedResponse, JobDetails, JobBlock
+from generate_contents import ResumeFormattedResponse, JobDetails, JobBlock
 
 from typing import Any, Dict, List
 

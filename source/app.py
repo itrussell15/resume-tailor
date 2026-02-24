@@ -14,9 +14,9 @@ from dataclasses import dataclass, asdict
 
 from gotenberg_client import GotenbergClient
 
-from .log_utils import setup_logging, get_logger
-from .generate_contents import Resume, ResumeSuggestions
-from .doc_modifier import DocModifier
+from log_utils import setup_logging, get_logger
+from generate_contents import Resume, ResumeSuggestions
+from doc_modifier import DocModifier
 
 @dataclass
 class Config:
