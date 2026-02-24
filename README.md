@@ -1,4 +1,6 @@
-# Resume_Automater - FastAPI frontend
+# Resume Tailor
+
+![logo](resources/resume-tailor.png)
 
 Quick start (local):
 
@@ -10,10 +12,13 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-2. Export your Google GenAI API key:
+2. Export your required environment variables:
 
 ```bash
+
 export GOOGLE_API_KEY="<your_key>"
+export RESOURCES_PATH="<path_to_resources_folder>"
+export GOTENBURG_URL="<gotenburl_url>"
 ```
 
 3. Run the app:

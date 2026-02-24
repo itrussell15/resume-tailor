@@ -217,4 +217,4 @@ output/
 SECRET.txt
 
 resources/
-!resources/prompts.json
+!resources/resume-tailor.png
