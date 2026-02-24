@@ -19,27 +19,78 @@ document.addEventListener('DOMContentLoaded', () => {
       const origText = genBtn.textContent;
       genBtn.textContent = 'Generating...';
       try {
-        const res = await fetch('/api/generate', {
+        // Request the backend to stream the generated PDF directly.
+        const res = await fetch('/api/generate?stream=1', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ suggestion: lastSuggestionData })
         });
-        console.log(res)
 
         if (!res.ok) {
+          // Try to parse JSON error if available
           const err = await res.json().catch(() => ({ detail: res.statusText }));
           const errorMsg = err.detail || res.statusText;
           alert('Generate failed: ' + errorMsg);
           return;
         }
 
-        // const result = await res.json();
-      //   const url = result.generated_resume_url;
-      //   if (url) {
-      //     window.open(url, '_blank');
-      //   } else {
-      //     alert('Generate succeeded.');
-      //   }
+        const contentType = (res.headers.get('content-type') || '').toLowerCase();
+        if (contentType.includes('application/pdf')) {
+          // The response is the PDF stream; open and trigger download
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          window.open(blobUrl, '_blank');
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = 'resume.pdf';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        } else {
+          // Fallback: parse JSON and handle as before (URL or base64)
+          const result = await res.json().catch(() => null);
+          if (result && result.generated_resume_url) {
+            try {
+              const fileRes = await fetch(result.generated_resume_url);
+              if (!fileRes.ok) throw new Error(fileRes.statusText || 'Failed to fetch file');
+              const blob = await fileRes.blob();
+              const blobUrl = URL.createObjectURL(blob);
+              window.open(blobUrl, '_blank');
+              const a = document.createElement('a');
+              a.href = blobUrl;
+              a.download = result.filename || 'resume.pdf';
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+            } catch (err) {
+              console.error('Failed to open generated_resume_url', err);
+              window.open(result.generated_resume_url, '_blank');
+            }
+          } else if (result && result.generated_pdf_base64) {
+            try {
+              const byteCharacters = atob(result.generated_pdf_base64);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'application/pdf' });
+              const blobUrl = URL.createObjectURL(blob);
+              window.open(blobUrl, '_blank');
+              const a = document.createElement('a');
+              a.href = blobUrl;
+              a.download = result.filename || 'resume.pdf';
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+            } catch (err) {
+              console.error('Failed to process base64 PDF', err);
+              alert('Generated PDF could not be opened.');
+            }
+          } else {
+            alert('Generate succeeded.');
+          }
+        }
       } catch (err) {
         console.error('Generate request failed', err);
         alert('Generate request failed: ' + (err.message || err));

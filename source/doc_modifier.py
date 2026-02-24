@@ -43,7 +43,7 @@ class DocModifier:
         return sections
 
     def modify_section(self, section: Dict[str, Any], changes: JobBlock):
-        self.logger.info(f"Modifying section {changes.company} with changes: {changes.bullet_points}")
+the ATS su        self.logger.info(f"Modifying section {changes.company}")
         if len(self.sections[section]) != len(changes.bullet_points):
             # TODO Handle this
             return

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 import os
 import json
@@ -37,12 +37,26 @@ class Config:
 setup_logging()
 logger = get_logger(__name__)
 
+## Main Section ##
+
 app = FastAPI()
 
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-CONFIG = Config.from_json_file(os.path.join("resources", "config.json"))
+resources_folder = os.getenv("RESOURCES_PATH", None)
+if resources_folder is None:
+    raise FileNotFoundError(f"No environment variable found for the resources folder")
+
+config_path = os.path.join(resources_folder, "config.json")
+if not os.path.exists(resources_folder) or not os.path.join(resources_folder, "config.json"):
+    raise FileExistsError(f"No valid file found at {resources_folder}/config.json")
+
+CONFIG = Config.from_json_file(config_path)
+
+##################
+
+### Fast API #####
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
@@ -66,11 +80,11 @@ async def suggestions(request: Request):
 
     try:
         def work():
-            # resume = Resume.from_pdf_url(api_1tion)
-
-            # Return mock data from previous query
-            formatted_data = ResumeSuggestions.from_json_file("example_output.json")
-            return formatted_data.suggestion_content.job_details.file_name, asdict(formatted_data)
+            resume = Resume.from_pdf_url(api_key, CONFIG.pdf_resume_url, CONFIG.prompt_path)
+            suggestion = resume.generate_suggestions(job_posting_url)
+            logger.info(f"Generated suggestion: {suggestion} - {suggestion.suggestion_content.job_details}")
+            output_name = suggestion.suggestion_content.job_details.file_name
+            return output_name, asdict(suggestion)
 
         save_name, result = await asyncio.to_thread(work)
         output_path = os.path.join(CONFIG.output, "json", f"{save_name}.json")
@@ -80,7 +94,6 @@ async def suggestions(request: Request):
         return JSONResponse(result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.post("/api/generate")
 async def generate(request: Request):
@@ -106,17 +119,29 @@ async def generate(request: Request):
 
             # # Save pdf
             output_pdf_path = os.path.join(CONFIG.output, "pdf", f"{formatted_suggestion.suggestion_content.job_details.file_name}.pdf")
-            is_ok = create_pdf_from_docx(output_path=output_pdf_path, input_path=output_docx_path)
-            # is_ok = True
+            is_ok, pdf_path = create_pdf_from_docx(output_path=output_pdf_path, input_path=output_docx_path)
             
-            return {"success": True, "status": "ok"}
+            return {"success": is_ok, "status": "ok", "pdf_path": pdf_path}
 
         result = await asyncio.to_thread(work)
+
+        # If the client requested the PDF to be streamed directly (e.g. ?stream=1),
+        # return the file as an application/pdf `FileResponse` so the frontend
+        # can open or download the PDF directly from the response body.
+        stream_param = request.query_params.get('stream', '').lower()
+        if stream_param in ('1', 'true', 'yes'):
+            pdf_path = result.get('pdf_path')
+            if not pdf_path or not os.path.exists(pdf_path):
+                raise HTTPException(status_code=500, detail=f'PDF not found: {pdf_path}')
+            filename = os.path.basename(pdf_path)
+            return FileResponse(path=pdf_path, media_type='application/pdf', filename=filename)
+
         return JSONResponse(result)
     except Exception as e:
         logger.error(f"Error generating resume: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+##################
 
 def create_pdf_from_docx(output_path: str, input_path: str): 
     if not os.path.exists(input_path):
@@ -137,8 +162,9 @@ def create_pdf_from_docx(output_path: str, input_path: str):
 
     logger.info(f"Converting to pdf from '{input_path}'")
 
-    # TODO Add this to env variable or config
-    gotenberg_url = "https://demo.gotenberg.dev"
+    gotenberg_url = os.getenv("GOTENBURG_URL", None)
+    if gotenberg_url is None:
+        raise ValueError("GOTENBERG_URL environment variable not set")
     input_path = Path(input_path)
     output_path = Path(output_path)
 
@@ -147,6 +173,7 @@ def create_pdf_from_docx(output_path: str, input_path: str):
             try:
                 response = route.convert(input_path).run()
                 response.to_file(output_path)
-                return True
+                return True, str(output_path)
             except Exception as e:
                 logger.warning(f"gotenberg client conversion failed: {e}")
+                raise e
