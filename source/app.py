@@ -42,7 +42,19 @@ app = FastAPI()
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-CONFIG = Config.from_json_file(os.path.join("resources", "config.json"))
+resources_folder = os.getenv("RESOURCES_PATH", None)
+if resources_folder is None:
+    raise FileNotFoundError(f"No environment variable found for the resources folder")
+
+config_path = os.path.join(resources_folder, "config.json")
+if not os.path.exists(resources_folder) or not os.path.join(resources_folder, "config.json"):
+    raise FileExistsError(f"No valid file found at {resources_folder}/config.json")
+
+CONFIG = Config.from_json_file(config_path)
+
+##################
+
+### Fast API #####
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
