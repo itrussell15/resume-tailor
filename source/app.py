@@ -37,26 +37,12 @@ class Config:
 setup_logging()
 logger = get_logger(__name__)
 
-## Main Section ##
-
 app = FastAPI()
 
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-resources_folder = os.getenv("RESOURCES_PATH", None)
-if resources_folder is None:
-    raise FileNotFoundError(f"No environment variable found for the resources folder")
-
-config_path = os.path.join(resources_folder, "config.json")
-if not os.path.exists(resources_folder) or not os.path.join(resources_folder, "config.json"):
-    raise FileExistsError(f"No valid file found at {resources_folder}/config.json")
-
-CONFIG = Config.from_json_file(config_path)
-
-##################
-
-### Fast API #####
+CONFIG = Config.from_json_file(os.path.join("resources", "config.json"))
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
@@ -141,7 +127,6 @@ async def generate(request: Request):
         logger.error(f"Error generating resume: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-##################
 
 def create_pdf_from_docx(output_path: str, input_path: str): 
     if not os.path.exists(input_path):

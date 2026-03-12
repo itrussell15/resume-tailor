@@ -16,7 +16,7 @@ from dataclasses import dataclass, asdict
 
 from typing import List, Dict, Any
 
-MODEL = "gemini-3-flash-preview"
+MODEL = os.getenv("MODEL", None)
 TIMESTAMP_FORMAT = "%Y_%m_%d-%H_%M_%S"
 
 @dataclass
@@ -103,6 +103,9 @@ class Resume:
         self._client = genai.Client(api_key=api_key)
         self._resume_context = resume_context
         self._prompts = prompt_config
+
+        if MODEL is None:
+            raise ValueError("MODEL environment variable not set")
 
     @staticmethod
     def from_pdf_url(api_key: str, url: str, prompt_config_path: str) -> Resume:
